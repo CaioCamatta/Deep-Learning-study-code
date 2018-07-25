@@ -1,0 +1,10 @@
+MNIST Tutorial/
+RL/MCPG/models/
+RL/MCPG/CarRacing-v0/
+RL/MCPG/tensorboard/
+RL/DQN/CarRacing-v0/
+RL/Actor_Critic/
+RL/DOOM_DQN/models/
+RL/DOOM_DQN/tensorboard/
+Stock/data/*
+Stock/individual_stocks_5yr/*
