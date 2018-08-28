@@ -6,5 +6,9 @@ RL/DQN/CarRacing-v0/
 RL/Actor_Critic/
 RL/DOOM_DQN/models/
 RL/DOOM_DQN/tensorboard/
+RL/DDDQN/
+RL/A2C/A2C with Sonic the Hedgehog/models
 Stock/data/*
 Stock/individual_stocks_5yr/*
+*.pyc
+*.pyo

@@ -12,7 +12,7 @@ env = env.unwrapped
 env.frameskip = 1
 
 # List of possible actions (alternatively, you could use a network with cintinous output)
-possible_actions =  [[+1, 0, 0], [-1, 0, 0], [0,+1,0], [0,0,0.4], [+1,0,0.4], [-1,0,0.4]]
+possible_actions =  [[+1, .1, 0], [-1, .1, 0], [0,+1,0], [0,0,0.5]]
 
 action_size = len(possible_actions)     # Number of possible actions
 gamma = 0.99                            # Discount rate
@@ -93,6 +93,7 @@ def discount_and_normalize_rewards(episode_rewards):
     discounted_episode_rewards = (discounted_episode_rewards - mean) / (std)
     return discounted_episode_rewards
 
+#### NOTE: Using separate batches is not necessary. It's just an attempt to improve the algorithm.
 def make_batch(batch_size, sess):
     """ Runs N (batch_size) games and returns the states, actions, rewards and
         the list of discounted rewards for that game."""
@@ -118,12 +119,14 @@ def make_batch(batch_size, sess):
             action_probability_distribution = sess.run(action_distribution, feed_dict={input_: state.reshape(1, *state.shape)})
 
             # Adds another level of randomness. 10% chance to perform a completly random action.
-            # This is useful because in this game the network ofter gets stuck at the beginning and stops progressing.
-            if np.random.rand() >= 0.1:
-                # Select action based on the the actions probability distribution . Ravel() flattens the array (2D -> 1D).
-                action_index = np.random.choice(range(action_size), p=action_probability_distribution.ravel())
-            else:
-                action_index = np.random.choice(range(action_size))
+            # This is useful because in this game the network oftem gets stuck on a 99.99% possibility of doing a certain movement and stops progressing.
+            if step%100==0: print(action_probability_distribution)
+            # if np.amax(action_probability_distribution) >= 0.98:
+            #     action_index = np.random.choice(range(action_size))
+            # else:
+            #     # Select action based on the the actions probability distribution . Ravel() flattens the array (2D -> 1D).
+            #
+            action_index = np.random.choice(range(action_size), p=action_probability_distribution.ravel())
 
             action = possible_actions[action_index]
 
@@ -156,6 +159,8 @@ def make_batch(batch_size, sess):
                 batch_actions.append(ep_actions)
                 batch_rewards.append(ep_rewards)
                 batch_discountedRewards.append(ep_discountedRewards)
+
+                print("Done with batch")
 
                 break
 
@@ -223,15 +228,17 @@ with tf.name_scope("inputs"):
 
     conv3_out = tf.nn.elu(conv3_batchnorm, name="conv3_out")
 
-    flatten = tf.layers.flatten(conv3_out)
+    flatten = tf.layers.flatten(conv3_out, name="flatten")
 
     fc1 = tf.layers.dense(inputs = flatten,
                           units = 512,
-                          activation=tf.nn.elu)
+                          activation=tf.nn.elu,
+                          name="fc1")
 
     fc2 = tf.layers.dense(inputs = fc1,
                           units = action_size,
-                          activation=None)
+                          activation=tf.nn.sigmoid,
+                          name="fc2")
 
     # Probability of doing each action
     action_distribution = tf.nn.softmax(fc2)
@@ -343,11 +350,11 @@ with tf.Session(config=tf.ConfigProto(gpu_options=gpu_options)) as sess:
         rewards.append(mean_reward_of_that_batch)
 
         # Save model every 5 epochs
-        if max_reward_recorded > 800:
-            save_path = saver.save(sess, f"./models/model800-{epoch}.ckpt")
+        if rewards_from_batches[-1] == max_reward_recorded:
+            save_path = saver.save(sess, f"./models/best_model-{epoch}-{max_reward_recorded}.ckpt")
             print("Model Saved")
-            break
-        if epoch % 20 == 0:
+
+        if epoch % 20 == 0 and epoch > 199:
             # Plot data (not necessary)
             plt.figure(1)
             plt.subplot(221)
@@ -359,7 +366,7 @@ with tf.Session(config=tf.ConfigProto(gpu_options=gpu_options)) as sess:
             plt.show()
 
             # Save model
-            save_path = saver.save(sess, f"./models/model1-{epoch}.ckpt")
+            save_path = saver.save(sess, f"./models/model-{epoch}.ckpt")
             print("Model Saved")
 
     env.close()
