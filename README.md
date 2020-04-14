@@ -1,5 +1,5 @@
 # Deep-Learning-study-code
-A dump of some of the code I wrote while studying Deep Learning.
+A collection of some of the code I wrote while studying Deep Learning.
 
 ## Important
   - The purpose of this repository is to show some of the stuff I coded while studying and practicing Deep Learning at the beginning of 2018.
